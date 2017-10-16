@@ -19,30 +19,104 @@
 //-----------------------------------------------------------------------
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 /// <summary>
 /// GUI controls.
 /// </summary>
 public class SimpleARGUIController : MonoBehaviour
 {
+
     public TangoPoseController m_poseController;
+
+    public GameObject tangoController;
+
+    public TangoPointCloud m_pointCloud;
+
+    MenuScript menuScript;
+
+    public Vector3 itemSpawnPos;
+
+    public void Start()
+    {
+        menuScript = tangoController.GetComponent<MenuScript>();
+        m_pointCloud = FindObjectOfType<TangoPointCloud>();
+    }
+
 
     /// <summary>
     /// Update this instance.
     /// </summary>
     public void Update()
     {
-        if (m_poseController != null)
+        //if (m_poseController != null)
+        //{
+        //    m_poseController.m_clutchEnabled = Input.GetMouseButton(0);
+        //}
+
+
+
+
+
+        if (Input.touchCount == 1)
         {
-            m_poseController.m_clutchEnabled = Input.GetMouseButton(0);
+            // Trigger place kitten function when single touch ended.
+            Touch t = Input.GetTouch(0);
+            if (t.phase == TouchPhase.Began)
+            {
+                if (!EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId))
+                {
+                    Debug.Log("Not on UI");
+                    PlaceItem(t.position);
+                }
+            }
         }
-       
+
         if (Input.GetKey(KeyCode.Escape))
         {
             // This is a fix for a lifecycle issue where calling
             // Application.Quit() here, and restarting the application
             // immediately results in a deadlocked app.
             AndroidHelper.AndroidQuit();
+        }
+    }
+
+
+
+    void PlaceItem(Vector2 touchPosition)
+    {
+        // Find the plane.
+        Camera cam = Camera.main;
+        Vector3 planeCenter;
+        Plane plane;
+        if (!m_pointCloud.FindPlane(cam, touchPosition, out planeCenter, out plane))
+        {
+            Debug.Log("cannot find plane.");
+            return;
+        }
+
+        // Place kitten on the surface, and make it always face the camera.
+        if (Vector3.Angle(plane.normal, Vector3.up) < 30.0f)
+        {
+            Vector3 up = plane.normal;
+            Vector3 right = Vector3.Cross(plane.normal, cam.transform.forward).normalized;
+            Vector3 forward = Vector3.Cross(right, plane.normal).normalized;
+            GameObject temp = menuScript.currentItem;
+            if (temp == null)
+            {
+                Debug.Log("Item not found.");
+            }
+            else
+            {
+                GameObject tempGameObject = Instantiate(menuScript.currentItem, planeCenter, Quaternion.LookRotation(forward, up));
+                itemSpawnPos = planeCenter;
+                menuScript.currentItem = null;
+                //tempGameObject.c
+            }
+        }
+        else
+        {
+            Debug.Log("surface is too steep for Object to stand on.");
         }
     }
 }

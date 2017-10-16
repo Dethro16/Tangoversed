@@ -32,9 +32,10 @@ namespace Lean.Touch
 
 		[Tooltip("The maximum scale value on all axes")]
 		public Vector3 ScaleMax;
-
+        GameObject UIController;
+        public SimpleARGUIController arController;
 #if UNITY_EDITOR
-		protected virtual void Reset()
+        protected virtual void Reset()
 		{
 			Start();
 		}
@@ -46,7 +47,9 @@ namespace Lean.Touch
 			{
 				RequiredSelectable = GetComponent<LeanSelectable>();
 			}
-		}
+
+            //arController = UIController.GetComponent<SimpleARGUIController>();
+        }
 
 		protected virtual void Update()
 		{
@@ -107,7 +110,9 @@ namespace Lean.Touch
 				}
 
 				transform.localScale = scale;
-			}
-		}
+                //transform.position = arController.itemSpawnPos;
+            }
+
+        }
 	}
 }
