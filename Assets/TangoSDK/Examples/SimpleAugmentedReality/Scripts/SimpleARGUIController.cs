@@ -49,25 +49,18 @@ public class SimpleARGUIController : MonoBehaviour
     /// </summary>
     public void Update()
     {
-        //if (m_poseController != null)
-        //{
-        //    m_poseController.m_clutchEnabled = Input.GetMouseButton(0);
-        //}
-
-
-
-
-
         if (Input.touchCount == 1)
         {
             // Trigger place kitten function when single touch ended.
             Touch t = Input.GetTouch(0);
             if (t.phase == TouchPhase.Began)
             {
-                if (!EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId))
+                if (!EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId) && menuScript.isSpawning)
                 {
                     Debug.Log("Not on UI");
+                    menuScript.currentItem.GetComponent<SetAllScripts>().ToggleAll();
                     PlaceItem(t.position);
+                    menuScript.isSpawning = false;
                 }
             }
         }
@@ -102,6 +95,7 @@ public class SimpleARGUIController : MonoBehaviour
             Vector3 right = Vector3.Cross(plane.normal, cam.transform.forward).normalized;
             Vector3 forward = Vector3.Cross(right, plane.normal).normalized;
             GameObject temp = menuScript.currentItem;
+
             if (temp == null)
             {
                 Debug.Log("Item not found.");
@@ -110,8 +104,10 @@ public class SimpleARGUIController : MonoBehaviour
             {
                 GameObject tempGameObject = Instantiate(menuScript.currentItem, planeCenter, Quaternion.LookRotation(forward, up));
                 itemSpawnPos = planeCenter;
-                menuScript.currentItem = null;
-                //tempGameObject.c
+                
+                menuScript.currentItem = tempGameObject;
+                //menuScript.currentItem.GetComponent<SetAllScripts>().ToggleOutline(true);
+
             }
         }
         else

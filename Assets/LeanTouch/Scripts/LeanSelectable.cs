@@ -3,102 +3,116 @@ using UnityEngine.Events;
 
 namespace Lean.Touch
 {
-	// This component allows you to select this GameObject via another component
-	public class LeanSelectable : MonoBehaviour
-	{
-		// Event signature
-		[System.Serializable] public class LeanFingerEvent : UnityEvent<LeanFinger> {}
+    // This component allows you to select this GameObject via another component
+    public class LeanSelectable : MonoBehaviour
+    {
+        // Event signature
+        [System.Serializable]
+        public class LeanFingerEvent : UnityEvent<LeanFinger> { }
 
-		[Tooltip("Should IsSelected temporarily return false if the selecting finger is still being held?")]
-		public bool HideWithFinger;
+        [Tooltip("Should IsSelected temporarily return false if the selecting finger is still being held?")]
+        public bool HideWithFinger;
 
-		public bool IsSelected
-		{
-			get
-			{
-				// Hide IsSelected?
-				if (HideWithFinger == true && isSelected == true && SelectingFinger != null)
-				{
-					return false;
-				}
+        public bool IsSelected
+        {
+            get
+            {
+                // Hide IsSelected?
+                if (HideWithFinger == true && isSelected == true && SelectingFinger != null)
+                {
+                    return false;
+                }
 
-				return isSelected;
-			}
-		}
+                return isSelected;
 
-		// This stores the finger that began selection of this LeanSelectable
-		// This will become null as soon as that finger releases, which you can detect via OnSelectUp
-		[System.NonSerialized]
-		public LeanFinger SelectingFinger;
+            }
+            set { isSelected = value; }
+        }
 
-		// Called when selection begins (finger = the finger that selected this)
-		public LeanFingerEvent OnSelect;
+        // This stores the finger that began selection of this LeanSelectable
+        // This will become null as soon as that finger releases, which you can detect via OnSelectUp
+        [System.NonSerialized]
+        public LeanFinger SelectingFinger;
 
-		// Called when the selecting finger goes up (finger = the finger that selected this)
-		public LeanFingerEvent OnSelectUp;
+        // Called when selection begins (finger = the finger that selected this)
+        public LeanFingerEvent OnSelect;
 
-		// Called when this is deselected, if OnSelectUp hasn't been called yet, it will get called first
-		public UnityEvent OnDeselect;
+        // Called when the selecting finger goes up (finger = the finger that selected this)
+        public LeanFingerEvent OnSelectUp;
 
-		// Is this selectable selected?
-		[SerializeField]
-		private bool isSelected;
+        // Called when this is deselected, if OnSelectUp hasn't been called yet, it will get called first
+        public UnityEvent OnDeselect;
 
-		[ContextMenu("Select")]
-		public void Select()
-		{
-			Select(null);
-		}
+        // Is this selectable selected?
+        [SerializeField]
+        private bool isSelected;
 
-		public void Select(LeanFinger finger)
-		{
-			isSelected      = true;
-			SelectingFinger = finger;
+        [ContextMenu("Select")]
+        public void Select()
+        {
+            Select(null);
+        }
 
-			OnSelect.Invoke(finger);
-		}
+        public void Select(LeanFinger finger)
+        {
+            Camera tempCam = Camera.main;
+            MenuScript mScript = tempCam.GetComponent<MenuScript>();
+            if (mScript.currentItem != null)
+            {
+                mScript.currentItem.GetComponent<SetAllScripts>().ToggleOutline(false);
+            }
 
-		[ContextMenu("Deselect")]
-		public void Deselect()
-		{
-			if (SelectingFinger != null)
-			{
-				OnSelectUp.Invoke(SelectingFinger);
+            mScript.currentItem = gameObject;
+            SetAllScripts sScript = gameObject.GetComponent<SetAllScripts>();
+            sScript.ToggleOutline(true);
 
-				SelectingFinger = null;
-			}
+            isSelected = true;
+            SelectingFinger = finger;
 
-			isSelected = false;
+            OnSelect.Invoke(finger);
+        }
 
-			OnDeselect.Invoke();
-		}
+        [ContextMenu("Deselect")]
+        public void Deselect()
+        {
+            if (SelectingFinger != null)
+            {
+                OnSelectUp.Invoke(SelectingFinger);
 
-		protected virtual void OnEnable()
-		{
-			// Hook events
-			LeanTouch.OnFingerUp += OnFingerUp;
-		}
+                SelectingFinger = null;
+            }
 
-		protected virtual void OnDisable()
-		{
-			// Unhook events
-			LeanTouch.OnFingerUp -= OnFingerUp;
+            isSelected = false;
 
-			if (isSelected == true)
-			{
-				Deselect();
-			}
-		}
+            OnDeselect.Invoke();
+        }
 
-		private void OnFingerUp(LeanFinger finger)
-		{
-			// If the finger went up, it's no longer selecting anything
-			if (finger == SelectingFinger)
-			{
-				OnSelectUp.Invoke(SelectingFinger);
+        protected virtual void OnEnable()
+        {
+            // Hook events
+            LeanTouch.OnFingerUp += OnFingerUp;
+        }
 
-				SelectingFinger = null;
-			}
-		}
-	}
+        protected virtual void OnDisable()
+        {
+            // Unhook events
+            LeanTouch.OnFingerUp -= OnFingerUp;
+
+            if (isSelected == true)
+            {
+                Deselect();
+            }
+        }
+
+        private void OnFingerUp(LeanFinger finger)
+        {
+            // If the finger went up, it's no longer selecting anything
+            if (finger == SelectingFinger)
+            {
+                OnSelectUp.Invoke(SelectingFinger);
+
+                SelectingFinger = null;
+            }
+        }
+    }
 }

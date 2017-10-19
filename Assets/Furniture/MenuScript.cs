@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,15 +10,16 @@ public class MenuScript : MonoBehaviour
     public GameObject Chair, Coffee, Couch, PotA, PotB, Rack, Rug, Table;
     // Use this for initialization
     Dictionary<string, GameObject> ObjectList = new Dictionary<string, GameObject>();
-
     string currentItemId = "";
     public GameObject currentItem = null;
     public GameObject canvas = null;
-    public List<GameObject> uiList = new List<GameObject>();
 
     GameObject[] allChildren;
 
+    public bool isSpawning = false;
+
     bool uiShow = true;
+
     void Start()
     {
         ObjectList.Add("Chair", Chair);
@@ -29,9 +31,6 @@ public class MenuScript : MonoBehaviour
         ObjectList.Add("Rug", Rug);
         ObjectList.Add("Table", Table);
         allChildren = new GameObject[canvas.transform.childCount];
-        //= GetComponentsInChildren<Transform>();
-
-
 
         for (int i = 0; i < canvas.transform.childCount; i++)
         {
@@ -62,13 +61,13 @@ public class MenuScript : MonoBehaviour
             if (uiShow && button.name != "HideUI")
             {
                 button.SetActive(uiShow);
-                if (button.name == "Restart")
+                if (button.name == "Restart" || button.name == "Delete")
                 {
                     button.transform.localScale = new Vector3(1, 1, 1);
                 }
                 else
                 {
-                    button.transform.localScale = new Vector3(6, 3, 1);
+                    button.transform.localScale = new Vector3(5, 3, 1);
                 }
 
             }
@@ -76,14 +75,84 @@ public class MenuScript : MonoBehaviour
         }
     }
 
+
+    void hideUI()
+    {
+        canvas.SetActive(false);
+    }
+
+    void showUI()
+    {
+        canvas.SetActive(true);
+    }
+
+
+    IEnumerator waiting()
+    {
+        string currentTime = System.DateTime.Now.ToString().Trim();
+
+        currentTime = currentTime.Replace(" ", "");
+        currentTime = currentTime.Replace("/", "");
+        currentTime = currentTime.Replace(":", "");
+
+        //hide ui
+
+        string filename = "Tangoversed-" + currentTime + ".png";
+
+        Debug.Log("Going to Capture!");
+        Debug.Log(filename);
+        hideUI();
+        yield return new WaitForSeconds(0.25f);
+
+        string Path = "../../../../ddwpics/" + filename;
+
+        Application.CaptureScreenshot(Path);
+        Debug.Log("CaptureScreenshot done!");
+
+        yield return new WaitForSeconds(0.25f);
+
+        showUI();
+    }
+
+    public void ScreenShot()
+    {
+        List<GameObject> temp = GameObject.FindGameObjectsWithTag("Item").ToList();
+
+        foreach (var item in temp)
+        {
+            item.GetComponent<SetAllScripts>().ToggleAll();
+        }
+
+        if (currentItem != null)
+        {
+            currentItem.GetComponent<Lean.Touch.LeanSelectable>().IsSelected = false;
+        }
+        currentItem = null;
+        //ToggleAll(false);
+        StartCoroutine(waiting());
+    }
+
     // Update is called once per frame
     void Update()
     {
 
     }
+
     public void AssignCurrentItem()
     {
         currentItem = ObjectList[currentItemId];
+        isSpawning = true;
+    }
+
+    public void DeleteItem()
+    {
+        if (currentItem == null)
+        {
+            return;
+        }
+
+        Destroy(currentItem);
+        currentItem = null;
     }
 
     public void SpawnItem()
